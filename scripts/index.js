@@ -15,17 +15,25 @@ function createCard(cardInf, deleteCard) {
     const cardTemplate = document.querySelector('#card-template').content;
     const cardElement = cardTemplate.querySelector('.card').cloneNode(true);
 
-    cardElement.querySelector('.card__title').textContent = cardInf.name;
-    cardElement.querySelector('.card__image').setAttribute('src', cardInf.link);
-
-    cardsContainer.append(cardElement);
+    const cardTitle = cardElement.querySelector(".card__title");
+    cardTitle.textContent = cardInf.name;
+    const cardImage = cardElement.querySelector(".card__image");
+    cardImage.src = cardInf.link; 
+    cardImage.alt = cardInf.name;
 
     cardElement.querySelector('.card__delete-button').addEventListener('click', evt => deleteCard(evt));
+
+    return cardElement;
+}
+
+function getCard(cardInf, deleteCard) {
+    const cardElement = createCard(cardInf, deleteCard);
+    cardsContainer.append(cardElement);
 }
 
 function deleteCard(evt) {
-    let card = evt.target.closest('.card');
+    const card = evt.target.closest('.card');
     card.remove();
 }
 
-initialCards.forEach(card => createCard(card, deleteCard));
+initialCards.forEach(card => getCard(card, deleteCard));
