@@ -1,5 +1,4 @@
-import {cardsContainer} from './index.js';
-import {openPopup} from './modal.js';
+import {openCard} from './index.js';
 
 export function createCard(cardInf, deleteCard, openCard, likeCard) {
     const cardTemplate = document.querySelector('#card-template').content;
@@ -10,11 +9,12 @@ export function createCard(cardInf, deleteCard, openCard, likeCard) {
     const cardImage = cardElement.querySelector('.card__image');
     cardImage.src = cardInf.link; 
     cardImage.alt = cardInf.name;
+    const cardLikeButton = cardElement.querySelector('.card__like-button')
 
     cardElement.querySelector('.card__delete-button').addEventListener('click', deleteCard);
 
-    cardsContainer.addEventListener('click', openCard);
-    cardsContainer.addEventListener('click', likeCard);
+    cardImage.addEventListener('click', openCard);
+    cardLikeButton.addEventListener('click', likeCard);
 
     return cardElement;
 }
@@ -22,18 +22,6 @@ export function createCard(cardInf, deleteCard, openCard, likeCard) {
 export function deleteCard(evt) {
     const card = evt.target.closest('.card');
     card.remove();
-}
-
-const imagePopup = document.querySelector('.popup_type_image');
-const popupImageConteiner = imagePopup.querySelector('.popup__image');
-
-export function openCard(evt) {
-    if(evt.target.classList.contains('card__image')) {
-        popupImageConteiner.src = evt.target.src;
-        popupImageConteiner.alt = evt.target.alt;
-        imagePopup.querySelector('.popup__caption').textContent = evt.target.alt;
-        openPopup(imagePopup);
-    }
 }
 
 export function likeCard(evt) {
