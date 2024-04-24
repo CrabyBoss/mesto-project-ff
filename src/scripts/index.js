@@ -11,6 +11,7 @@ import '../index.css';
 import {initialCards} from './maincards.js';
 import {createCard, deleteCard, likeCard} from './card.js';
 import {openPopup, closePopup} from './modal.js';
+import {enableValidation, clearValidation} from './validation.js';
 
 const mainContent = document.querySelector('.content');
 const cardsContainer = mainContent.querySelector('.places__list');
@@ -46,16 +47,24 @@ closeButtons.forEach(closeButton => {
 
         if(closestPopup.classList.contains('popup_type_new-card')) {
             resetCreateForm();
+            clearValidation(formCreateElement, [newCardNameInput, newCardUrlInput]);
         }
+
     });
     
 })
 
 // события для открывающих кнопок
 
-profileButton.addEventListener('click', () => openPopup(profilePopup));
+profileButton.addEventListener('click', () => {
+    openPopup(profilePopup);
+    clearValidation(formEditElement, [nameInput, jobInput]);
+});
 
-newPlaceAddButton.addEventListener('click', () => openPopup(newPlacePopup));
+newPlaceAddButton.addEventListener('click', () => {
+    openPopup(newPlacePopup);
+    clearValidation(formCreateElement, [newCardNameInput, newCardUrlInput]);
+});
 
 // открытие карточки
 
@@ -99,11 +108,12 @@ formEditElement.addEventListener('submit', handleEditFormSubmit);
 
 const formCreateElement = document.forms['new-place'];
 
+const newCardNameInput = formCreateElement.elements['place-name'];
+const newCardUrlInput = formCreateElement.elements.link;
+
 function handleCreateFormSubmit(evt) {
     evt.preventDefault();
-    const newCardNameInput = formCreateElement.elements['place-name'].value;
-    const newCardUrlInput = formCreateElement.elements.link.value;
-    getCard({name: newCardNameInput, link: newCardUrlInput}, deleteCard);
+    getCard({name: newCardNameInput.value, link: newCardUrlInput.value}, deleteCard);
 
     closePopup(document.querySelector('.popup_is-opened'));
     resetCreateForm();
@@ -121,3 +131,16 @@ function resetEditForm() {
 function resetCreateForm() {
     formCreateElement.reset();
 }
+
+// Включение валидации всех форм
+
+const validationConfig = {
+    formSelector: '.popup__form',
+    inputSelector: '.popup__input',
+    submitButtonSelector: '.popup__button',
+    inactiveButtonClass: 'popup__button_disabled',
+    inputErrorClass: 'popup__input_type_error',
+    errorClass: 'popup__error_visible',
+};
+
+enableValidation();
