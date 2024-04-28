@@ -1,18 +1,54 @@
+import {deleteCardRequest, addLikeRequest, deleteLikeRequest} from './api';
+
 export function createCard(cardInf, deleteCard, openCard, likeCard) {
     const cardTemplate = document.querySelector('#card-template').content;
     const cardElement = cardTemplate.querySelector('.card').cloneNode(true);
 
     const cardTitle = cardElement.querySelector('.card__title');
     cardTitle.textContent = cardInf.name;
+    
     const cardImage = cardElement.querySelector('.card__image');
     cardImage.src = cardInf.link; 
     cardImage.alt = cardInf.name;
-    const cardLikeButton = cardElement.querySelector('.card__like-button')
-
-    cardElement.querySelector('.card__delete-button').addEventListener('click', deleteCard);
-
     cardImage.addEventListener('click', openCard);
-    cardLikeButton.addEventListener('click', likeCard);
+    
+    const cardDeleteButton = cardElement.querySelector('.card__delete-button');
+    if(cardInf.cardOwnerId != cardInf.myId) {
+        cardDeleteButton.classList.add('card__delete-button-hidden')
+    }
+    cardDeleteButton.addEventListener('click',(evt) => {
+        deleteCardRequest(cardInf.cardId)
+            .catch(err => console.log(err));
+        deleteCard(evt);
+    });
+
+    const cardLikeButton = cardElement.querySelector('.card__like-button');
+    if(cardInf.likes != 0) {
+        cardInf.likes.some(element => {
+            if(element._id === cardInf.myId) {
+                cardLikeButton.classList.add('card__like-button_is-active');
+            }
+        });
+    }
+    const cardLikeCounts = cardElement.querySelector('.card__like-counts');
+    cardLikeCounts.textContent = cardInf.likes.length;
+    cardLikeButton.addEventListener('click', (evt) => {
+        if(cardLikeButton.classList.contains('card__like-button_is-active')) {
+            deleteLikeRequest(cardInf.cardId)
+                .then(newCardConfig => {
+                    cardLikeCounts.textContent = newCardConfig.likes.length;
+                    likeCard(evt);
+                })
+                .catch(err => console.log(err));
+        } else {
+            addLikeRequest(cardInf.cardId)
+                .then(newCardConfig => {
+                    cardLikeCounts.textContent = newCardConfig.likes.length;
+                    likeCard(evt);
+                })
+                .catch(err => console.log(err));
+        }
+    });
 
     return cardElement;
 }

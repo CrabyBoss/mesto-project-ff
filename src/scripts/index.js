@@ -1,14 +1,4 @@
-// @todo: Темплейт карточки
-
-// @todo: DOM узлы
-
-// @todo: Функция создания карточки
-
-// @todo: Функция удаления карточки
-
-// @todo: Вывести карточки на страницу
 import '../index.css';
-import {initialCards} from './maincards.js';
 import {createCard, deleteCard, likeCard} from './card.js';
 import {openPopup, closePopup} from './modal.js';
 import {enableValidation, clearValidation} from './validation.js';
@@ -21,15 +11,14 @@ function getCard(cardInf, deleteCard) {
     cardsContainer.prepend(cardElement);
 }
 
-initialCards.forEach(card => getCard(card, deleteCard));
-
-// 6 СПРИНТ...
-
 const profileButton = mainContent.querySelector('.profile__edit-button');
 const profilePopup = document.querySelector('.popup_type_edit');
 
 const newPlaceAddButton = mainContent.querySelector('.profile__add-button');
 const newPlacePopup = document.querySelector('.popup_type_new-card');
+
+const changeAvatarButton = mainContent.querySelector('.profile__image');
+const changeAvatarPopup = document.querySelector('.popup_type_change-avatar')
 
 /// событие для закрывающихся кнопок
 
@@ -47,9 +36,13 @@ closeButtons.forEach(closeButton => {
 
         if(closestPopup.classList.contains('popup_type_new-card')) {
             resetCreateForm();
-            clearValidation(formCreateElement, [newCardNameInput, newCardUrlInput]);
+            clearValidation(formCreateElement, formElementConfig);
         }
 
+        if(closestPopup.classList.contains('popup_type_change-avatar')) {
+            resetChangeAvatarForm();
+            clearValidation(formChangeAvatarElement, formElementConfig);
+        }
     });
     
 })
@@ -58,12 +51,17 @@ closeButtons.forEach(closeButton => {
 
 profileButton.addEventListener('click', () => {
     openPopup(profilePopup);
-    clearValidation(formEditElement, [nameInput, jobInput]);
+    clearValidation(formEditElement, formElementConfig);
 });
 
 newPlaceAddButton.addEventListener('click', () => {
     openPopup(newPlacePopup);
-    clearValidation(formCreateElement, [newCardNameInput, newCardUrlInput]);
+    clearValidation(formCreateElement, formElementConfig);
+});
+
+changeAvatarButton.addEventListener('click', () => {
+    openPopup(changeAvatarPopup);
+    clearValidation(formChangeAvatarElement, formElementConfig);
 });
 
 // открытие карточки
@@ -81,7 +79,7 @@ export function openCard(evt) {
     }
 }
 
-/// edit form
+// edit form
 
 const formEditElement = document.forms['edit-profile'];
 
@@ -90,38 +88,72 @@ const jobInput = formEditElement.elements.description;
 
 const profileTitle = mainContent.querySelector('.profile__title');
 const profileDescription = mainContent.querySelector('.profile__description');
-
-nameInput.value = profileTitle.textContent;
-jobInput.value = profileDescription.textContent;
+const profileAvatarPicture = mainContent.querySelector('.profile__image');
 
 function handleEditFormSubmit(evt) {
     evt.preventDefault();
-    profileTitle.textContent = nameInput.value;
-    profileDescription.textContent = jobInput.value;
+    renderLoading(true, formEditElement.elements['edit-button']);
 
+    sendUserData({name: nameInput.value, about: jobInput.value})
+        .then(newUserDataConfig => {
+            profileTitle.textContent = newUserDataConfig.name;
+            profileDescription.textContent = newUserDataConfig.about;
+        })
+        .catch(err => {console.log(err)});
+
+    renderLoading(false, formEditElement.elements['edit-button']);
     closePopup(document.querySelector('.popup_is-opened'));
 }
 
 formEditElement.addEventListener('submit', handleEditFormSubmit);
 
-/// create form
+// create form
 
 const formCreateElement = document.forms['new-place'];
-
 const newCardNameInput = formCreateElement.elements['place-name'];
 const newCardUrlInput = formCreateElement.elements.link;
 
 function handleCreateFormSubmit(evt) {
     evt.preventDefault();
-    getCard({name: newCardNameInput.value, link: newCardUrlInput.value}, deleteCard);
-
+    renderLoading(true, formCreateElement.elements['new-card-button']);
+    sendCardData({name: newCardNameInput.value, link: newCardUrlInput.value})
+        .then(newcardDataConfig => {
+            getCard({name: newcardDataConfig.name,
+                link: newcardDataConfig.link,
+                cardId: newcardDataConfig._id,
+                likes: 0}, deleteCard);
+        })
+        .catch(err => {console.log(err)});
+    
+    renderLoading(false, formCreateElement.elements['new-card-button']);
     closePopup(document.querySelector('.popup_is-opened'));
     resetCreateForm();
 }
 
 formCreateElement.addEventListener('submit', handleCreateFormSubmit);
 
-///reset functions for forms
+// change avatar form
+
+const formChangeAvatarElement = document.forms['change-avatar'];
+const newAvatarUrlInput = formChangeAvatarElement.elements.link;
+
+function handleChangeAvatarFormSubmit(evt) {
+    evt.preventDefault();
+    renderLoading(true, formChangeAvatarElement.elements['change-avatar-button']);
+    changeUserAvatar(newAvatarUrlInput.value)
+        .then(newAvatarConfig => {
+            profileAvatarPicture.style = "background-image: url(" + newAvatarConfig.avatar + ");";
+        })
+        .catch(err => {console.log(err)});
+    
+    renderLoading(false, formChangeAvatarElement.elements['change-avatar-button']);
+    closePopup(document.querySelector('.popup_is-opened'));
+    resetChangeAvatarForm();
+}
+
+formChangeAvatarElement.addEventListener('submit', handleChangeAvatarFormSubmit);
+
+//reset functions for forms
 
 function resetEditForm() {
     nameInput.value = profileTitle.textContent;
@@ -130,6 +162,10 @@ function resetEditForm() {
 
 function resetCreateForm() {
     formCreateElement.reset();
+}
+
+function resetChangeAvatarForm() {
+    formChangeAvatarElement.reset();
 }
 
 // Включение валидации всех форм
@@ -143,4 +179,53 @@ const validationConfig = {
     errorClass: 'popup__error_visible',
 };
 
-enableValidation();
+const formElementConfig = {
+    inputSelector: '.popup__input',
+    submitButtonSelector: '.popup__button',
+    inactiveButtonClass: 'popup__button_disabled',
+    inputErrorClass: 'popup__input_type_error',
+    errorClass: 'popup__error_visible',
+}
+
+enableValidation(validationConfig);
+
+// api
+
+import {GetCardsArray, getUserData, sendUserData, sendCardData, changeUserAvatar} from './api.js';
+
+// Добавляю карточки, меняю инфу профиля
+
+Promise.all([GetCardsArray(), getUserData()])
+    .then(([CardsArray, MyUserData]) => {
+        CardsArray.reverse().forEach(card => getCard({name: card.name,
+            link: card.link,
+            cardId: card._id,
+            cardOwnerId: card.owner._id,
+            myId: MyUserData._id,
+            likes: card.likes}, deleteCard))
+
+        changeUserData({name: MyUserData.name,
+            description: MyUserData.about,
+            avatar: MyUserData.avatar});
+    })
+    .catch(err => {console.log(err)});
+
+function changeUserData(userDataConfig) {
+    profileTitle.textContent = userDataConfig.name;
+    profileDescription.textContent = userDataConfig.description;
+    profileAvatarPicture.style = "background-image: url(" + userDataConfig.avatar + ");";
+
+    nameInput.value = profileTitle.textContent;
+    jobInput.value = profileDescription.textContent;
+}
+
+const isLoadingText = 'Сохранение...';
+const originalText = 'Сохранить';
+
+function renderLoading(isLoading, button) {
+    if(isLoading) {
+        button.textContent = isLoadingText;
+    } else {
+        button.textContent = originalText;
+    }
+}

@@ -32,6 +32,7 @@
       © 2021 Mesto Russia
     </p>
   </footer>
+
   <div class="popup popup_type_edit">
     <div class="popup__content">
       <button type="button" class="popup__close"></button>
@@ -41,10 +42,11 @@
         <span class="form__input-error name-input-error"></span>
         <input type="text" name="description" class="popup__input popup__input_type_description" id="description-input" placeholder="Занятие" minlength="2" maxlength="200" pattern="^[a-zA-Zа-яА-ЯёЁ\- ]+$" data-error-message="Разрешены только латинские, кириллические буквы, знаки дефиса и пробелы" required>
         <span class="form__input-error description-input-error"></span>
-        <button type="submit" class="button popup__button">Сохранить</button>
+        <button type="submit" name="edit-button" class="button popup__button">Сохранить</button>
       </form>
     </div>
   </div>
+
   <div class="popup popup_type_new-card">
     <div class="popup__content">
       <button type="button" class="popup__close"></button>
@@ -54,15 +56,28 @@
         <span class="form__input-error place-name-input-error"></span>
         <input type="url" name="link" class="popup__input popup__input_type_url" id="link-input" placeholder="Ссылка на картинку" required>
         <span class="form__input-error link-input-error"></span>
-        <button type="submit" class="button popup__button">Сохранить</button>
+        <button type="submit" name="new-card-button" class="button popup__button">Сохранить</button>
       </form>
     </div>
   </div>
+
   <div class="popup popup_type_image">
     <div class="popup__content popup__content_content_image">
       <button type="button" class="popup__close"></button>
       <img src="" alt="" class="popup__image">
       <p class="popup__caption"></p>
+    </div>
+  </div>
+
+  <div class="popup popup_type_change-avatar">
+    <div class="popup__content popup__content_change-avatar">
+      <button type="button" class="popup__close"></button>
+      <h3 class="popup__title">Обновить аватар</h3>
+      <form class="popup__form" name="change-avatar" novalidate>
+        <input type="url" name="link" class="popup__input popup__input_type_url" id="link-input" placeholder="Ссылка на картинку" required>
+        <span class="form__input-error link-input-error"></span>
+        <button type="submit" name="change-avatar-button" class="button popup__button">Сохранить</button>
+      </form>
     </div>
   </div>
 </div>
@@ -72,9 +87,11 @@
     <img class="card__image" src="" alt="" />
     <button type="button" class="card__delete-button"></button>
     <div class="card__description">
-      <h2 class="card__title">
-      </h2>
-      <button type="button" class="card__like-button"></button>
+      <h2 class="card__title"></h2>
+      <div class="card__like-container">
+        <button type="button" class="card__like-button"></button>
+        <p class="card__like-counts"></p>
+      </div>
     </div>
   </li>
 </template>
