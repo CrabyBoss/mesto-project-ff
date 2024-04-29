@@ -15,12 +15,11 @@ export function createCard(cardInf, deleteCard, openCard, likeCard) {
     const cardDeleteButton = cardElement.querySelector('.card__delete-button');
     if(cardInf.cardOwnerId != cardInf.myId) {
         cardDeleteButton.classList.add('card__delete-button-hidden')
+    } else {
+        cardDeleteButton.addEventListener('click',(evt) => {
+            deleteCard(evt, cardInf.cardId);
+        });
     }
-    cardDeleteButton.addEventListener('click',(evt) => {
-        deleteCardRequest(cardInf.cardId)
-            .catch(err => console.log(err));
-        deleteCard(evt);
-    });
 
     const cardLikeButton = cardElement.querySelector('.card__like-button');
     if(cardInf.likes != 0) {
@@ -33,29 +32,25 @@ export function createCard(cardInf, deleteCard, openCard, likeCard) {
     const cardLikeCounts = cardElement.querySelector('.card__like-counts');
     cardLikeCounts.textContent = cardInf.likes.length;
     cardLikeButton.addEventListener('click', (evt) => {
-        if(cardLikeButton.classList.contains('card__like-button_is-active')) {
-            deleteLikeRequest(cardInf.cardId)
-                .then(newCardConfig => {
-                    cardLikeCounts.textContent = newCardConfig.likes.length;
-                    likeCard(evt);
+        const likeMethod = (cardId) => cardLikeButton.classList.contains('card__like-button_is-active') ? deleteLikeRequest(cardId) : addLikeRequest(cardId);
+            likeMethod(cardInf.cardId)
+                .then(newCardConfig => { 
+                    cardLikeCounts.textContent = newCardConfig.likes.length; 
+                    likeCard(evt); 
                 })
                 .catch(err => console.log(err));
-        } else {
-            addLikeRequest(cardInf.cardId)
-                .then(newCardConfig => {
-                    cardLikeCounts.textContent = newCardConfig.likes.length;
-                    likeCard(evt);
-                })
-                .catch(err => console.log(err));
-        }
     });
-
+    
     return cardElement;
 }
 
-export function deleteCard(evt) {
-    const card = evt.target.closest('.card');
-    card.remove();
+export function deleteCard(evt, cardId) {
+    deleteCardRequest(cardId)
+        .then(() => {
+            const card = evt.target.closest('.card');
+            card.remove();
+        })
+        .catch(err => console.log(err));
 }
 
 export function likeCard(evt) {

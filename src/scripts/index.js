@@ -28,21 +28,7 @@ closeButtons.forEach(closeButton => {
     const closestPopup = closeButton.closest('.popup');
     
     closeButton.addEventListener('click', () => {
-        closePopup(closestPopup)
-
-        if(closestPopup.classList.contains('popup_type_edit')) {
-            resetEditForm();
-        }
-
-        if(closestPopup.classList.contains('popup_type_new-card')) {
-            resetCreateForm();
-            clearValidation(formCreateElement, formElementConfig);
-        }
-
-        if(closestPopup.classList.contains('popup_type_change-avatar')) {
-            resetChangeAvatarForm();
-            clearValidation(formChangeAvatarElement, formElementConfig);
-        }
+        closePopup(closestPopup);
     });
     
 })
@@ -51,17 +37,20 @@ closeButtons.forEach(closeButton => {
 
 profileButton.addEventListener('click', () => {
     openPopup(profilePopup);
-    clearValidation(formEditElement, formElementConfig);
+    resetEditForm();
+    clearValidation(formEditElement, validationConfig);
 });
 
 newPlaceAddButton.addEventListener('click', () => {
     openPopup(newPlacePopup);
-    clearValidation(formCreateElement, formElementConfig);
+    resetCreateForm();
+    clearValidation(formCreateElement, validationConfig);
 });
 
 changeAvatarButton.addEventListener('click', () => {
     openPopup(changeAvatarPopup);
-    clearValidation(formChangeAvatarElement, formElementConfig);
+    resetChangeAvatarForm();
+    clearValidation(formChangeAvatarElement, validationConfig);
 });
 
 // открытие карточки
@@ -99,9 +88,9 @@ function handleEditFormSubmit(evt) {
             profileTitle.textContent = newUserDataConfig.name;
             profileDescription.textContent = newUserDataConfig.about;
         })
-        .catch(err => {console.log(err)});
+        .catch(err => {console.log(err)})
+        .finally(() => renderLoading(false, formEditElement.elements['edit-button']));
 
-    renderLoading(false, formEditElement.elements['edit-button']);
     closePopup(document.querySelector('.popup_is-opened'));
 }
 
@@ -123,11 +112,10 @@ function handleCreateFormSubmit(evt) {
                 cardId: newcardDataConfig._id,
                 likes: 0}, deleteCard);
         })
-        .catch(err => {console.log(err)});
+        .catch(err => {console.log(err)})
+        .finally(() => renderLoading(false, formCreateElement.elements['new-card-button']));
     
-    renderLoading(false, formCreateElement.elements['new-card-button']);
     closePopup(document.querySelector('.popup_is-opened'));
-    resetCreateForm();
 }
 
 formCreateElement.addEventListener('submit', handleCreateFormSubmit);
@@ -144,11 +132,10 @@ function handleChangeAvatarFormSubmit(evt) {
         .then(newAvatarConfig => {
             profileAvatarPicture.style = "background-image: url(" + newAvatarConfig.avatar + ");";
         })
-        .catch(err => {console.log(err)});
-    
-    renderLoading(false, formChangeAvatarElement.elements['change-avatar-button']);
+        .catch(err => {console.log(err)})
+        .finally(() => renderLoading(false, formChangeAvatarElement.elements['change-avatar-button']));
+
     closePopup(document.querySelector('.popup_is-opened'));
-    resetChangeAvatarForm();
 }
 
 formChangeAvatarElement.addEventListener('submit', handleChangeAvatarFormSubmit);
@@ -179,14 +166,6 @@ const validationConfig = {
     errorClass: 'popup__error_visible',
 };
 
-const formElementConfig = {
-    inputSelector: '.popup__input',
-    submitButtonSelector: '.popup__button',
-    inactiveButtonClass: 'popup__button_disabled',
-    inputErrorClass: 'popup__input_type_error',
-    errorClass: 'popup__error_visible',
-}
-
 enableValidation(validationConfig);
 
 // api
@@ -196,17 +175,17 @@ import {GetCardsArray, getUserData, sendUserData, sendCardData, changeUserAvatar
 // Добавляю карточки, меняю инфу профиля
 
 Promise.all([GetCardsArray(), getUserData()])
-    .then(([CardsArray, MyUserData]) => {
-        CardsArray.reverse().forEach(card => getCard({name: card.name,
+    .then(([cardsArray, myUserData]) => {
+        cardsArray.reverse().forEach(card => getCard({name: card.name,
             link: card.link,
             cardId: card._id,
             cardOwnerId: card.owner._id,
-            myId: MyUserData._id,
+            myId: myUserData._id,
             likes: card.likes}, deleteCard))
 
-        changeUserData({name: MyUserData.name,
-            description: MyUserData.about,
-            avatar: MyUserData.avatar});
+        changeUserData({name: myUserData.name,
+            description: myUserData.about,
+            avatar: myUserData.avatar});
     })
     .catch(err => {console.log(err)});
 
@@ -223,9 +202,5 @@ const isLoadingText = 'Сохранение...';
 const originalText = 'Сохранить';
 
 function renderLoading(isLoading, button) {
-    if(isLoading) {
-        button.textContent = isLoadingText;
-    } else {
-        button.textContent = originalText;
-    }
+    button.textContent = isLoading ? isLoadingText : originalText;
 }
